@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Hoji's Works</title>
+<style>
+:root{--bg:#faf8f4;--fg:#262320;--mut:#6b655d;--card:#fff;--line:#e2ddd4;--acc:#d9763a}
+@media (prefers-color-scheme:dark){:root{--bg:#1c1a18;--fg:#eee9e1;--mut:#a39b8f;--card:#272421;--line:#3a3631}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:-apple-system,"Apple SD Gothic Neo","Noto Sans KR",sans-serif}
+.wrap{max-width:960px;margin:0 auto;padding:32px 16px 56px}
+h1{margin:0 0 4px;font-size:28px}
+p.sub{margin:0 0 24px;color:var(--mut)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
+a.card{display:block;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;text-decoration:none;color:inherit;transition:transform .15s,border-color .15s}
+a.card:hover{transform:translateY(-3px);border-color:var(--acc)}
+.tag{display:inline-block;font-size:11px;color:var(--acc);border:1px solid var(--acc);border-radius:99px;padding:1px 8px;margin-bottom:8px}
+.card h2{margin:0 0 6px;font-size:17px}
+.card p{margin:0;color:var(--mut);font-size:13.5px;line-height:1.5}
+.date{margin-top:10px;font-size:12px;color:var(--mut)}
+footer{margin-top:40px;font-size:12px;color:var(--mut)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Hoji's Works</h1>
+  <p class="sub">직접 만든 HTML · 모션그래픽 · 웹 앱 모음</p>
+  <div class="grid" id="grid"></div>
+  <footer>새 작품은 <code>works/</code> 폴더에 파일을 넣고 아래 스크립트의 WORKS 목록에 한 줄만 추가하면 됩니다.</footer>
+</div>
+<script>
+// 새 작품 추가: 이 배열에 한 줄 추가
+const WORKS = [
+  {title:"Earth to Universe", desc:"지구에서 우주까지 스케일을 확대하는 3D 모션그래픽 (모바일은 느릴 수 있음)", tag:"3D 모션", file:"works/earth-to-universe.html", date:"2026-10-02"},
+  {title:"아이스 아메리카노 손그림", desc:"아이스 아메리카노가 만들어지는 손그림 모션그래픽", tag:"모션", file:"works/iced-americano.html", date:"2026-10-01"},
+  {title:"Claude 전체 구조 한 장 정리", desc:"Local · Cloud · GitHub 벤 다이어그램으로 보는 Claude 서비스 구조", tag:"다이어그램", file:"works/claude-architecture.html", date:"2026-10-02"}
+];
+const g=document.getElementById("grid");
+WORKS.sort((a,b)=>b.date.localeCompare(a.date)).forEach(w=>{
+  const a=document.createElement("a");a.className="card";a.href=w.file;
+  [["span","tag",w.tag],["h2","",w.title],["p","",w.desc],["div","date",w.date]].forEach(([t,c,x])=>{
+    const e=document.createElement(t);if(c)e.className=c;e.textContent=x;a.appendChild(e)});
+  g.appendChild(a);
+});
+</script>
+</body>
+</html>

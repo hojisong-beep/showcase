@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Claude 전체 구조 한 장 정리</title>
+<style>
+:root{--bg:#faf8f4;--fg:#262320;--mut:#6b655d;--card:#fff;--line:#e2ddd4;--loc:#2f7de1;--cld:#d9763a;--gh:#2e9e5b}
+@media (prefers-color-scheme:dark){:root{--bg:#1c1a18;--fg:#eee9e1;--mut:#a39b8f;--card:#272421;--line:#3a3631}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:-apple-system,"Apple SD Gothic Neo","Pretendard","Noto Sans KR",sans-serif;line-height:1.5}
+.wrap{max-width:1100px;margin:0 auto;padding:24px 16px 48px}
+h1{font-size:26px;margin:0 0 4px}
+.sub{color:var(--mut);margin:0 0 20px;font-size:14px}
+h2{font-size:17px;margin:28px 0 10px;border-left:4px solid var(--cld);padding-left:10px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+svg{width:100%;height:auto;display:block}
+svg text{font-family:inherit;fill:var(--fg)}
+.t{font-size:15px;font-weight:700}.s{font-size:11.5px}.m{font-size:11px;fill:var(--mut)}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:12.5px;margin-top:8px;color:var(--mut)}
+.dot{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:5px;vertical-align:-1px}
+table{border-collapse:collapse;width:100%;font-size:12.5px}
+th,td{border:1px solid var(--line);padding:7px 8px;text-align:left;vertical-align:top}
+th{background:rgba(127,127,127,.12);font-size:12px}
+.y{color:#1f9d55;font-weight:700}.n{color:#d64545;font-weight:700}.p{color:#c58a00;font-weight:700}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:760px){.grid{grid-template-columns:1fr}}
+code,pre{font-family:ui-monospace,Menlo,monospace;font-size:12px}
+pre{margin:6px 0;background:rgba(127,127,127,.12);padding:8px 10px;border-radius:8px;overflow:auto;white-space:pre-wrap}
+.chip{display:inline-block;border:1px solid var(--line);border-radius:99px;padding:2px 10px;margin:2px;font-size:12px;background:rgba(127,127,127,.08)}
+ul{margin:6px 0;padding-left:18px;font-size:13px}
+h3{font-size:14px;margin:0 0 4px}
+.note{font-size:12px;color:var(--mut);margin-top:24px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>Claude 전체 구조 — 한 장 설명도</h1>
+<p class="sub">“코드와 실행이 어디에 있는가”를 기준으로 본 벤 다이어그램 + 접근 가능 여부 + 동기화 명령</p>
+
+<h2>① 벤 다이어그램 : 내 컴퓨터 · Anthropic Cloud · GitHub</h2>
+<div class="card">
+<svg viewBox="0 0 1000 760" role="img" aria-label="Local, Anthropic Cloud, GitHub 벤 다이어그램">
+  <circle cx="340" cy="290" r="260" fill="#2f7de1" fill-opacity=".20" stroke="#2f7de1" stroke-width="2.5"/>
+  <circle cx="660" cy="290" r="260" fill="#d9763a" fill-opacity=".20" stroke="#d9763a" stroke-width="2.5"/>
+  <circle cx="500" cy="500" r="230" fill="#2e9e5b" fill-opacity=".20" stroke="#2e9e5b" stroke-width="2.5"/>
+
+  <!-- Local only -->
+  <g text-anchor="middle">
+    <text x="262" y="78" class="t" style="fill:#2f7de1">💻 내 컴퓨터 (Local)</text>
+    <text x="262" y="112" class="s">Claude Code CLI  (<tspan font-family="monospace">claude</tspan>)</text>
+    <text x="262" y="131" class="s">VS Code 터미널 · VS Code 확장</text>
+    <text x="262" y="150" class="s">Desktop 앱 “Code” 탭 (Local)</text>
+    <text x="262" y="178" class="s">내 디스크의 소스 · CLAUDE.md</text>
+    <text x="262" y="197" class="s">~/.claude 설정·세션 기록</text>
+    <text x="262" y="225" class="s">샌드박스: OS 레벨(선택)</text>
+    <text x="262" y="243" class="m">macOS Seatbelt / Linux bubblewrap</text>
+    <text x="262" y="261" class="m">+ 도구별 권한 프롬프트</text>
+  </g>
+  <!-- Cloud only -->
+  <g text-anchor="middle">
+    <text x="738" y="78" class="t" style="fill:#d9763a">☁️ Anthropic Cloud</text>
+    <text x="738" y="112" class="s">claude.ai 웹 · 데스크톱 · 모바일 채팅</text>
+    <text x="738" y="131" class="s">Projects(지식·지침) · Artifacts</text>
+    <text x="738" y="150" class="s">모델 추론 (Opus/Sonnet/Haiku)</text>
+    <text x="738" y="178" class="s">코드실행·파일생성 → 격리 컨테이너</text>
+    <text x="738" y="197" class="s">Claude Code on the web → 격리 VM</text>
+    <text x="738" y="225" class="s">VM: 일회용 · 세션 후 소멸</text>
+    <text x="738" y="243" class="m">네트워크 제한/허용목록 · 자격증명 프록시</text>
+    <text x="738" y="261" class="m">로컬 파일 접근 불가</text>
+  </g>
+  <!-- Local ∩ Cloud -->
+  <g text-anchor="middle">
+    <text x="500" y="186" class="s" font-weight="700">공통 연결</text>
+    <text x="500" y="205" class="m">같은 로그인 계정·플랜</text>
+    <text x="500" y="222" class="m">API 호출(프롬프트 전송)</text>
+    <text x="500" y="239" class="m">MCP 커넥터 · Skills</text>
+    <text x="500" y="260" class="s" style="fill:#d9763a">claude --remote / &amp; ⟶ 웹</text>
+    <text x="500" y="277" class="s" style="fill:#2f7de1">claude --teleport ⟵ 로컬</text>
+  </g>
+  <!-- triple -->
+  <g text-anchor="middle">
+    <text x="500" y="322" class="s" font-weight="700">★ 동기화 지점</text>
+    <text x="500" y="340" class="s">PR · claude/* 브랜치</text>
+    <text x="500" y="358" class="m">= GitHub 원격 저장소</text>
+    <text x="500" y="375" class="m">(세 곳이 만나는 곳)</text>
+  </g>
+  <!-- L∩G -->
+  <g text-anchor="middle">
+    <text x="360" y="392" class="s" font-weight="700">로컬 ⇄ GitHub</text>
+    <text x="360" y="410" class="m">git clone / fetch / pull</text>
+    <text x="360" y="427" class="m">git add · commit · push</text>
+    <text x="360" y="444" class="m">gh pr create</text>
+    <text x="360" y="461" class="m">(Claude가 대신 실행 가능)</text>
+  </g>
+  <!-- C∩G -->
+  <g text-anchor="middle">
+    <text x="640" y="392" class="s" font-weight="700">웹 ⇄ GitHub</text>
+    <text x="640" y="410" class="m">Claude GitHub App 설치</text>
+    <text x="640" y="427" class="m">repo → VM에 clone</text>
+    <text x="640" y="444" class="m">claude/* 브랜치로 push</text>
+    <text x="640" y="461" class="m">PR 생성 버튼</text>
+  </g>
+  <!-- GitHub only -->
+  <g text-anchor="middle">
+    <text x="500" y="590" class="t" style="fill:#2e9e5b">🐙 GitHub (원격 저장소)</text>
+    <text x="500" y="612" class="s">repo · branch · PR · Issues — 소스의 단일 진실원천</text>
+    <text x="500" y="634" class="s">GitHub Actions: claude-code-action</text>
+    <text x="500" y="652" class="m">@claude 멘션 → GitHub 러너에서 실행</text>
+    <text x="500" y="676" class="m">(Claude는 어떤 경로든 결과를 여기로 모음)</text>
+  </g>
+</svg>
+<div class="legend">
+  <span><i class="dot" style="background:#2f7de1"></i>Local — 내 PC에서 실행, 내 파일 직접 접근</span>
+  <span><i class="dot" style="background:#d9763a"></i>Cloud — Anthropic 서버, 격리 환경</span>
+  <span><i class="dot" style="background:#2e9e5b"></i>GitHub — 소스 저장·협업(제3의 서비스)</span>
+  <span>겹치는 영역 = 두 곳이 모두 관여하는 기능</span>
+</div>
+</div>
+
+<h2>② 제품 구분 &amp; 접근 가능 여부</h2>
+<div class="card" style="overflow:auto">
+<table>
+<tr><th>제품 / 사용 형태</th><th>실행 위치</th><th>내 로컬 파일</th><th>소스·결과 저장</th><th>샌드박스 / 격리</th><th>GitHub</th></tr>
+<tr><td><b>Claude.ai 채팅</b><br>웹·데스크톱·모바일 앱</td><td>Anthropic Cloud</td><td class="n">✗ 직접 불가<br>(업로드한 파일만)</td><td>대화·Projects 파일은 내 계정(클라우드)에 저장</td><td>코드실행/파일생성 시 격리 컨테이너, 네트워크 제한</td><td class="p">△ 커넥터·Projects 연동 수준</td></tr>
+<tr><td><b>Projects</b> (claude.ai)</td><td>Cloud</td><td class="n">✗</td><td>지식 파일·지침이 계정에 저장 (코드 저장소 아님)</td><td>채팅과 동일</td><td class="p">△ 파일 참조용</td></tr>
+<tr><td><b>Claude Code CLI</b><br>(Local)</td><td>내 PC</td><td class="y">✓ 허용한 범위 전체</td><td>내 디스크의 프로젝트 폴더</td><td>권한 프롬프트 + 선택적 OS 샌드박스(/sandbox)</td><td class="y">✓ git·gh 직접 실행</td></tr>
+<tr><td><b>VS Code 확장 / 터미널</b></td><td>내 PC (Remote-SSH면 그 서버)</td><td class="y">✓ 열린 워크스페이스</td><td>내 디스크</td><td>CLI와 동일 + 에디터 diff 승인</td><td class="y">✓ 동일</td></tr>
+<tr><td><b>Desktop 앱 Code 탭</b></td><td>Local 또는 Remote(클라우드) 선택</td><td class="p">Local만 ✓</td><td>Local: 디스크(worktree로 분리 가능) / Remote: 웹과 동일</td><td>선택한 환경을 따름</td><td class="y">✓</td></tr>
+<tr><td><b>Claude Code on the web</b><br>claude.ai/code · iOS 앱</td><td>Anthropic 관리 격리 VM</td><td class="n">✗ (GitHub repo만)</td><td>repo를 VM에 임시 clone → 결과는 claude/* 브랜치로 push, VM은 소멸</td><td>VM 격리, 네트워크 허용목록, 토큰은 프록시가 보관</td><td class="y">✓ GitHub App 필수</td></tr>
+<tr><td><b>GitHub Action / Slack</b></td><td>GitHub 러너 / Cloud 세션</td><td class="n">✗</td><td>repo + PR</td><td>러너/VM 격리</td><td class="y">✓</td></tr>
+</table>
+</div>
+
+<h2>③ 소스 이동 &amp; 동기화 명령</h2>
+<div class="grid">
+  <div class="card">
+    <h3>💻 로컬 → GitHub</h3>
+<pre>git add -A
+git commit -m "메시지"
+git push -u origin my-branch
+gh pr create --fill</pre>
+    <ul><li>Claude Code에게 “커밋하고 PR 만들어줘”라고 하면 위 명령을 대신 실행</li></ul>
+    <h3>🐙 GitHub → 로컬</h3>
+<pre>git clone &lt;repo-url&gt;
+git fetch origin
+git checkout claude/xxxx   # 웹 세션이 만든 브랜치
+git pull</pre>
+  </div>
+  <div class="card">
+    <h3>🔁 로컬 ⇄ 웹 Claude Code 세션</h3>
+<pre>claude --remote "작업 내용"   # 로컬에서 시작→클라우드 VM이 수행
+claude --teleport &lt;session-id&gt;  # 웹 세션을 내 터미널로 가져오기
+/teleport                      # (세션 안에서) 같은 기능</pre>
+    <ul>
+      <li>웹은 <b>GitHub에 push된 것만</b> 보임 → 로컬 미커밋 변경은 먼저 push</li>
+      <li>웹 작업 결과는 항상 브랜치/PR로 돌아옴 → 로컬에서 fetch/checkout</li>
+      <li>※ 플래그 이름은 버전에 따라 다를 수 있음 (<code>claude --help</code> 확인)</li>
+    </ul>
+  </div>
+</div>
+
+<h2>④ VS Code: 터미널 vs 확장(플러그인) vs CLI</h2>
+<div class="grid">
+  <div class="card">
+    <h3>⌨️ 터미널에서 <code>claude</code> (= CLI)</h3>
+    <ul>
+      <li>텍스트 UI(TUI), 키보드 중심, 모든 슬래시 명령</li>
+      <li>VS Code 밖(iTerm, SSH, CI)에서도 동일하게 사용</li>
+      <li><code>claude -p "…"</code> 비대화 모드 → 스크립트·CI·Agent SDK</li>
+      <li><code>/ide</code>로 에디터와 연결하면 선택 영역·diff 공유</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h3>🧩 VS Code 확장 (Claude Code 패널)</h3>
+    <ul>
+      <li>사이드 패널 GUI, 에디터 내 인라인 diff 승인</li>
+      <li>선택 코드 자동 컨텍스트, <code>@파일</code> 멘션, 체크포인트 되돌리기</li>
+      <li>VS Code 안에서만 사용 (UI 래퍼)</li>
+    </ul>
+  </div>
+</div>
+<div class="card" style="margin-top:14px">
+  <b>공통점:</b> 둘 다 <b>내 PC(또는 Remote 서버)</b>에서 같은 엔진으로 실행 · 같은 계정 인증 · 같은 <code>CLAUDE.md</code>, <code>~/.claude/settings.json</code>, MCP, hooks, skills 공유 → 코드는 내 디스크에 있고, 프롬프트/컨텍스트만 Anthropic API로 전송됩니다.
+</div>
+
+<h2>⑤ 서비스 전체 그림</h2>
+<div class="card">
+  <div><b>모델:</b> <span class="chip">Opus</span><span class="chip">Sonnet</span><span class="chip">Haiku</span> — 모든 제품이 같은 모델군 사용</div>
+  <div><b>사용 방법 (과금 단위):</b>
+    <span class="chip">구독: Free / Pro / Max / Team / Enterprise → claude.ai + Claude Code</span>
+    <span class="chip">API 종량제(Console 키) → Claude Code·SDK·직접 개발</span>
+    <span class="chip">AWS Bedrock / Google Vertex / MS Foundry 경유</span></div>
+  <div><b>사용 면(surface):</b>
+    <span class="chip">웹 claude.ai</span><span class="chip">데스크톱 앱</span><span class="chip">모바일 앱</span><span class="chip">Claude Code CLI</span><span class="chip">VS Code / JetBrains 확장</span><span class="chip">Code on the web</span><span class="chip">Slack</span><span class="chip">Claude in Chrome</span><span class="chip">GitHub Action</span></div>
+  <div><b>확장 계층:</b>
+    <span class="chip">MCP 서버(외부 도구 연결)</span><span class="chip">Skills</span><span class="chip">Subagents</span><span class="chip">Hooks</span><span class="chip">CLAUDE.md / Memory</span><span class="chip">Agent SDK / Managed Agents</span></div>
+  <div style="margin-top:8px;font-size:13px"><b>한 줄 요약:</b> <u>대화·문서 작업</u>은 클라우드(claude.ai), <u>내 파일을 직접 고치는 코딩</u>은 로컬 Claude Code, <u>내 PC를 끄고 맡기는 코딩</u>은 클라우드 Claude Code — 세 경우 모두 <b>GitHub</b>가 소스 동기화의 허브입니다.</div>
+</div>
+
+<p class="note">※ 제품 기능·명령어·플래그는 버전에 따라 바뀔 수 있습니다. 최신 내용은 공식 문서(docs.claude.com)와 <code>claude --help</code>로 확인하세요.</p>
+</div>
+</body>
+</html>
