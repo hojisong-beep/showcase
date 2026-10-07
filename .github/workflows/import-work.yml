@@ -1,0 +1,88 @@
+name: Import work
+
+# GitHub 앱/웹 > Actions > "Import work" > Run workflow 로 실행
+# 공개 저장소의 HTML 한 개를 works/ 로 가져오고, 목록(index.html)에 카드까지 추가한다.
+on:
+  workflow_dispatch:
+    inputs:
+      repo:
+        description: "원본 저장소 (공개)"
+        default: "hojisong-beep/myStorage"
+        required: true
+      ref:
+        description: "브랜치 또는 태그"
+        default: "main"
+        required: true
+      path:
+        description: "저장소 안 파일 경로 (예: jero-motion.html)"
+        required: true
+      title:
+        description: "목록에 표시할 제목 (비우면 목록은 건드리지 않음)"
+        required: false
+      desc:
+        description: "목록에 표시할 설명"
+        required: false
+      tag:
+        description: "목록 태그"
+        default: "모션"
+        required: false
+
+permissions:
+  contents: write
+  pages: write
+
+concurrency: import-work
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download file
+        env:
+          REPO: ${{ inputs.repo }}
+          REF: ${{ inputs.ref }}
+          SRC: ${{ inputs.path }}
+        run: |
+          case "$SRC" in *.html) ;; *) echo "::error::.html 파일만 가져올 수 있습니다"; exit 1;; esac
+          case "$SRC" in *..*) echo "::error::잘못된 경로"; exit 1;; esac
+          name="$(basename "$SRC")"
+          curl -fsSL "https://raw.githubusercontent.com/${REPO}/${REF}/${SRC}" -o "works/${name}"
+          echo "NAME=${name}" >> "$GITHUB_ENV"
+          ls -lh "works/${name}"
+
+      - name: Add card to index.html
+        if: ${{ inputs.title != '' }}
+        env:
+          TITLE: ${{ inputs.title }}
+          DESC: ${{ inputs.desc }}
+          TAG: ${{ inputs.tag }}
+        run: |
+          python3 - <<'PY'
+          import json, os, datetime
+          name = os.environ["NAME"]
+          s = open("index.html", encoding="utf-8").read()
+          if f'works/{name}"' in s:
+              print("이미 목록에 있음 - 건너뜀"); raise SystemExit
+          line = '  {title:%s, desc:%s, tag:%s, file:"works/%s", date:"%s"},\n' % (
+              json.dumps(os.environ["TITLE"], ensure_ascii=False),
+              json.dumps(os.environ["DESC"], ensure_ascii=False),
+              json.dumps(os.environ["TAG"], ensure_ascii=False),
+              name, datetime.date.today().isoformat())
+          key = "const WORKS = [\n"
+          assert key in s
+          open("index.html", "w", encoding="utf-8").write(s.replace(key, key + line, 1))
+          PY
+
+      - name: Commit and trigger Pages build
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then echo "변경 없음"; exit 0; fi
+          git commit -m "Import ${NAME}"
+          git push
+          gh api -X POST "repos/${{ github.repository }}/pages/builds" || true
